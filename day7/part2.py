@@ -1,3 +1,4 @@
+from pprint import pprint
 from pathlib import Path
 from typing import List, Dict
 from collections import namedtuple
@@ -28,28 +29,14 @@ def parse(rule: str) -> Dict[str, List[Bag]]:
     return c
 
 
-def contains_shinny_gold(bag_name: str, bags: Dict[str, List[Bag]]) -> bool:
-    if not bags.get(bag_name):
-        return False
-    for bag in bags.get(bag_name):
-        if bag.name == "shiny gold":
-            return True
-        if contains_shinny_gold(bag.name, bags):
-            return True
-    return False
-
-
-def count_shinny_gold(data: Dict[str, List[Bag]], nb: int = 0) -> int:
-    for bag_name, bags in data.items():
-        if bag_name == "shiny gold":
-            continue
-        for bag in bags:
-            if "shiny gold" == bag.name:
-                nb += 1
-                break
-            if contains_shinny_gold(bag.name, data):
-                nb += 1
-                break
+def count(name: str, bags: Dict[str, List[Bag]]) -> int:
+    nb = 0
+    bags_list = bags.get(name)
+    if not bags_list:
+        return 0
+    for bag in bags_list:
+        nb += bag.qty
+        nb += bag.qty * count(bag.name, bags)
     return nb
 
 
@@ -58,12 +45,15 @@ def compute(data: List[str]) -> int:
     for rule in data:
         parsed = parse(rule)
         bags.update(parsed)
-    return count_shinny_gold(bags)
+    nb = count("shiny gold", bags)
+    return nb
 
 
 def test():
     data = read_data(Path("example"))
-    assert compute(data) == 4
+    assert compute(data) == 32
+    data = read_data(Path("example2"))
+    assert compute(data) == 126
 
 
 def run():
